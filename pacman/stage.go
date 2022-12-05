@@ -4,7 +4,7 @@ type stage struct {
 	matrix []string
 }
 
-var stage1 = stage{
+var defaultStage = &stage{
 	[]string{
 		"3888888884888888885",
 		"gqrrrrrrrgrrrrrrrqg",
@@ -25,5 +25,3 @@ var stage1 = stage{
 		"l8888888m8m8888888n",
 	},
 }
-
-var defaultStage = &stage1
