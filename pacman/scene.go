@@ -2,6 +2,7 @@ package pacman
 
 import (
 	"bytes"
+	"github.com/weverton-souza/go-pacman/pacman/handler"
 	"image"
 
 	"github.com/hajimehoshi/ebiten"
@@ -15,8 +16,8 @@ type scene struct {
 	stage       *stage
 }
 
-func newScene(st *stage) *scene {
-	s := &scene{}
+func newScene(st *stage) (s *scene) {
+	s = &scene{}
 	s.stage = st
 	if s.stage == nil {
 		s.stage = defaultStage
@@ -25,15 +26,17 @@ func newScene(st *stage) *scene {
 	s.loadImage()
 	s.createStage()
 	s.buildWallSurface()
-	return s
+	return
 }
 
 func (s *scene) createStage() {
 	h := len(s.stage.matrix)
 	w := len(s.stage.matrix[0])
 	s.matrix = make([][]elem, h)
+
 	for i := 0; i < h; i++ {
 		s.matrix[i] = make([]elem, w)
+
 		for j := 0; j < w; j++ {
 			c := s.stage.matrix[i][j] - '0'
 			if c <= 9 {
@@ -45,14 +48,14 @@ func (s *scene) createStage() {
 	}
 }
 
-func (s *scene) screenWidth() int {
-	w := len(s.stage.matrix[0])
-	return w * stageBlocSize
+func (s *scene) screenWidth() (w int) {
+	w = len(s.stage.matrix[0]) * stageBlocSize
+	return
 }
 
-func (s *scene) screenHeight() int {
-	h := len(s.stage.matrix)
-	return h * stageBlocSize
+func (s *scene) screenHeight() (h int) {
+	h = len(s.stage.matrix) * stageBlocSize
+	return
 }
 
 func (s *scene) buildWallSurface() {
@@ -65,26 +68,28 @@ func (s *scene) buildWallSurface() {
 
 	for i := 0; i < sizeH/backgroundImageSize; i++ {
 		y := float64(i * backgroundImageSize)
+
 		for j := 0; j < sizeW/backgroundImageSize; j++ {
 			op := &ebiten.DrawImageOptions{}
 			x := float64(j * backgroundImageSize)
 			op.GeoM.Translate(x, y)
+
 			err := s.wallSurface.DrawImage(s.images[backgroundElem], op)
-			handleError(err)
+			handler.HandleError(handler.RUNTIME, err)
 		}
 	}
 
 	for i := 0; i < h; i++ {
 		y := float64(i * stageBlocSize)
 		for j := 0; j < w; j++ {
-			if !isWall(s.matrix[i][j]) {
-				continue
+			if isWall(s.matrix[i][j]) {
+				op := &ebiten.DrawImageOptions{}
+				x := float64(j * stageBlocSize)
+				op.GeoM.Translate(x, y)
+
+				err := s.wallSurface.DrawImage(s.images[s.matrix[i][j]], op)
+				handler.HandleError(handler.RUNTIME, err)
 			}
-			op := &ebiten.DrawImageOptions{}
-			x := float64(j * stageBlocSize)
-			op.GeoM.Translate(x, y)
-			err := s.wallSurface.DrawImage(s.images[s.matrix[i][j]], op)
-			handleError(err)
 		}
 	}
 }
@@ -92,25 +97,25 @@ func (s *scene) buildWallSurface() {
 func (s *scene) loadImage() {
 	for i := w0; i <= w24; i++ {
 		img, _, err := image.Decode(bytes.NewReader(pacimages.WallImages[i]))
-		handleError(err)
+		handler.HandleError(handler.RUNTIME, err)
+
 		s.images[i], err = ebiten.NewImageFromImage(img, ebiten.FilterDefault)
-		handleError(err)
+		handler.HandleError(handler.RUNTIME, err)
 	}
 
 	img, _, err := image.Decode(bytes.NewReader(pacimages.Background_png))
-	handleError(err)
+	handler.HandleError(handler.RUNTIME, err)
+
 	s.images[backgroundElem], err = ebiten.NewImageFromImage(img, ebiten.FilterDefault)
-	handleError(err)
+	handler.HandleError(handler.RUNTIME, err)
 }
 
 func (s *scene) update(screen *ebiten.Image) error {
-	if ebiten.IsDrawingSkipped() {
+	if err1, err2 := screen.Clear(), screen.DrawImage(s.wallSurface, nil); !ebiten.IsDrawingSkipped() && (err1 != nil || err2 != nil) {
+
+		handler.HandleError(handler.RUNTIME, err1, err2)
 		return nil
 	}
 
-	err := screen.Clear()
-	handleError(err)
-	err = screen.DrawImage(s.wallSurface, nil)
-	handleError(err)
 	return nil
 }
