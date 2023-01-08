@@ -10,10 +10,14 @@ import (
 )
 
 type scene struct {
-	matrix      [][]elem
-	wallSurface *ebiten.Image
-	images      map[elem]*ebiten.Image
-	stage       *stage
+	matrix        [][]elem
+	wallSurface   *ebiten.Image
+	images        map[elem]*ebiten.Image
+	stage         *stage
+	dotManager    *dotManager
+	bigDotManager *bigDotManager
+	player        *player
+	ghostManager  *ghostManager
 }
 
 func newScene(st *stage) (s *scene) {
@@ -23,6 +27,9 @@ func newScene(st *stage) (s *scene) {
 		s.stage = defaultStage
 	}
 	s.images = make(map[elem]*ebiten.Image)
+	s.dotManager = newDotManager()
+	s.bigDotManager = newBigDotManager()
+	s.ghostManager = newGhostManager()
 	s.loadImage()
 	s.createStage()
 	s.buildWallSurface()
@@ -43,6 +50,23 @@ func (s *scene) createStage() {
 				s.matrix[i][j] = elem(c)
 			} else {
 				s.matrix[i][j] = elem(s.stage.matrix[i][j] - 'a' + 10)
+			}
+
+			switch s.matrix[i][j] {
+			case dotElem:
+				s.dotManager.add(i, j)
+			case bigDotElem:
+				s.bigDotManager.add(i, j)
+			case playerElem:
+				s.player = newPlayer(i, j)
+			case blinkyElem:
+				s.ghostManager.addGhost(i, j, blinkyElem)
+			case inkyElem:
+				s.ghostManager.addGhost(i, j, inkyElem)
+			case pinkyElem:
+				s.ghostManager.addGhost(i, j, pinkyElem)
+			case clydeElem:
+				s.ghostManager.addGhost(i, j, clydeElem)
 			}
 		}
 	}
@@ -110,12 +134,29 @@ func (s *scene) loadImage() {
 	handler.HandleError(handler.RUNTIME, err)
 }
 
+/*
+* When IsDrawingSkipped is true, the rendered result is not adopted.
+*
+ */
 func (s *scene) update(screen *ebiten.Image) error {
-	if err1, err2 := screen.Clear(), screen.DrawImage(s.wallSurface, nil); !ebiten.IsDrawingSkipped() && (err1 != nil || err2 != nil) {
-
-		handler.HandleError(handler.RUNTIME, err1, err2)
+	if ebiten.IsDrawingSkipped() {
 		return nil
 	}
+
+	err1 := screen.Clear()
+	if err1 != nil {
+		return err1
+	}
+
+	err2 := screen.DrawImage(s.wallSurface, nil)
+	if err2 != nil {
+		return err2
+	}
+
+	s.dotManager.draw(screen)
+	s.bigDotManager.draw(screen)
+	s.player.draw(screen)
+	s.ghostManager.draw(screen)
 
 	return nil
 }
