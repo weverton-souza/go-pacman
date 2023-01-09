@@ -18,6 +18,7 @@ type scene struct {
 	bigDotManager *bigDotManager
 	player        *player
 	ghostManager  *ghostManager
+	textManager   *textManager
 }
 
 func newScene(st *stage) (s *scene) {
@@ -30,6 +31,10 @@ func newScene(st *stage) (s *scene) {
 	s.dotManager = newDotManager()
 	s.bigDotManager = newBigDotManager()
 	s.ghostManager = newGhostManager()
+	s.textManager = newTextManager(len(s.stage.matrix[0])*stageBlocSize, len(s.stage.matrix)*stageBlocSize)
+	s.loadImages()
+	s.createStage()
+	s.buildWallSurface()
 	s.loadImage()
 	s.createStage()
 	s.buildWallSurface()
@@ -78,16 +83,16 @@ func (s *scene) screenWidth() (w int) {
 }
 
 func (s *scene) screenHeight() (h int) {
-	h = len(s.stage.matrix) * stageBlocSize
+	h = ((len(s.stage.matrix)*stageBlocSize)/backgroundImageSize + 2) * backgroundImageSize
 	return
 }
 
 func (s *scene) buildWallSurface() {
-	h := len(s.stage.matrix)
-	w := len(s.stage.matrix[0])
+	height := len(s.stage.matrix)
+	width := len(s.stage.matrix[0])
 
-	sizeW := ((w*stageBlocSize)/backgroundImageSize + 1) * backgroundImageSize
-	sizeH := ((h*stageBlocSize)/backgroundImageSize + 1) * backgroundImageSize
+	sizeW := ((width*stageBlocSize)/backgroundImageSize + 1) * backgroundImageSize
+	sizeH := ((height*stageBlocSize)/backgroundImageSize + 1) * backgroundImageSize
 	s.wallSurface, _ = ebiten.NewImage(sizeW, sizeH, ebiten.FilterDefault)
 
 	for i := 0; i < sizeH/backgroundImageSize; i++ {
@@ -103,9 +108,9 @@ func (s *scene) buildWallSurface() {
 		}
 	}
 
-	for i := 0; i < h; i++ {
+	for i := 0; i < height; i++ {
 		y := float64(i * stageBlocSize)
-		for j := 0; j < w; j++ {
+		for j := 0; j < width; j++ {
 			if isWall(s.matrix[i][j]) {
 				op := &ebiten.DrawImageOptions{}
 				x := float64(j * stageBlocSize)
@@ -157,6 +162,14 @@ func (s *scene) update(screen *ebiten.Image) error {
 	s.bigDotManager.draw(screen)
 	s.player.draw(screen)
 	s.ghostManager.draw(screen)
+	s.textManager.draw(screen, 0, 1, s.player.images[1])
 
 	return nil
+}
+
+func (s *scene) loadImages() {
+	for i := w0; i <= w24; i++ {
+		s.images[i] = loadImage(pacimages.WallImages[i])
+	}
+	s.images[backgroundElem] = loadImage(pacimages.Background_png)
 }
