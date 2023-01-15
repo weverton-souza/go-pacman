@@ -159,6 +159,7 @@ func (s *scene) update(screen *ebiten.Image, in input) error {
 	}
 
 	s.player.move(s.matrix, in)
+	s.ghostManager.move(s.matrix, s.player.curPos)
 	s.dotManager.draw(screen)
 	s.bigDotManager.draw(screen)
 	s.player.draw(screen)
