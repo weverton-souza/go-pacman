@@ -10,6 +10,6 @@ import (
 func main() {
 	game := pacman.NewGame()
 
-	err := ebiten.Run(game.Update, game.ScreenWidth(), game.ScreenHeight(), 1.5, "Pacman")
+	err := ebiten.Run(game.Update, game.ScreenWidth(), game.ScreenHeight(), 1.3, "Pacman")
 	handler.HandleError(handler.RUNTIME, err)
 }

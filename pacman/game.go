@@ -6,6 +6,7 @@ import (
 
 type Game struct {
 	scene *scene
+	input input
 }
 
 type pos struct {
@@ -27,5 +28,6 @@ func (g *Game) ScreenHeight() int {
 }
 
 func (g *Game) Update(screen *ebiten.Image) error {
-	return g.scene.update(screen)
+	g.input = keyPressed()
+	return g.scene.update(screen, g.input)
 }

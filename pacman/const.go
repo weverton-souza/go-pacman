@@ -44,3 +44,13 @@ const (
 	fruitElem
 	backgroundElem
 )
+
+type input int
+
+const (
+	_ input = iota
+	up
+	right
+	down
+	left
+)
